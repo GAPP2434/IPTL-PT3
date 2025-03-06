@@ -11,13 +11,25 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("http://localhost:5000/api/auth/login", 
+            const response = await axios.post(
+                "http://localhost:5000/api/auth/login", 
                 { email, password }, 
                 { withCredentials: true }
             );
-            navigate("/dashboard");
+            if (response.data.message) {
+                console.log('Login successful:', response.data);
+                const confirmed = window.confirm("Login successful! Click OK to continue to dashboard.");
+                if (confirmed) {
+                    navigate("/dashboard");
+                }
+            }
         } catch (err) {
-            alert("Invalid credentials");
+            console.error('Login error:', err);
+            if (err.response && err.response.data && err.response.data.error) {
+                alert(err.response.data.error);
+            } else {
+                alert("Login failed. Please try again.");
+            }
         }
     };
 

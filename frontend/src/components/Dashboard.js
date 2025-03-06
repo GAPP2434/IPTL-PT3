@@ -10,7 +10,14 @@ const Dashboard = () => {
     useEffect(() => {
         axios.get("http://localhost:5000/api/auth/users", {withCredentials: true})
             .then(response => setUsers(response.data))
-            .catch(() => navigate("/"));
+            .catch((error) => {
+                if (error.response?.status === 401) {
+                    alert("Unauthorized access! Please login first");
+                } else {
+                    alert("Error loading users");
+                }
+                navigate("/");
+            });
     }, [navigate]);
 
     const handleLogout = async () => {
