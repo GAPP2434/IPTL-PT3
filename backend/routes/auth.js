@@ -1,6 +1,6 @@
 const express = require("express");
 const User = require("../models/User");
-const bycrpt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -21,18 +21,26 @@ router.post("/register", async (req, res) => {
 
 //Login user
 router.post("/login", async (req, res) => {
-    const {email, password} = req.body;
+    try {
+        const {email, password} = req.body;
+        
+        // Find user by email
+        const user = await User.findOne({ email });
+        
+        // Check if user exists and password matches
+        if(!user || !(await bcrypt.compare(password, user.password))){
+            return res.status(400).json({error: "Invalid credentials"});
+        }
 
-    if(!user || !(await bcrypt.compare(password, user.password))){
-        return res.status(400).json({error: "Invalid credentials"});
+        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "1h"});
+
+        res.cookie("token", token, {httpOnly: true}).json({
+            message: "Login successful",
+            user: { name: user.name, email: user.email }
+        });
+    } catch (error) {
+        res.status(500).json({error: "Login failed"});
     }
-
-    const token = kwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "1h"});
-
-    res.cookie("token", token, {httpOnly: true}).json({
-        message: "Login successful",
-        user: { name: user.name, email: user.email }
-    });
 });
 
 //Get all users (for dashboard)
